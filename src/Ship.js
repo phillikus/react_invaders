@@ -1,9 +1,13 @@
+import Bullet from './Bullet';
+
 export default class Ship {
 	constructor(args) {
 		this.position = args.position;
-		this.velocity = { x:0, y: 0}
+		this.onDie = args.onDie;
 		this.speed = 2.5;
 		this.radius = 15;
+		this.bullets = [];
+		this.lastShot = 0;
 	}
 
 	update(keys) {
@@ -18,6 +22,32 @@ export default class Ship {
 		} else if (keys.down) {
 			this.position.y += this.speed;
 		}
+
+		if (keys.space && Date.now() - this.lastShot > 250) {
+			const bullet = new Bullet({
+				position: { x: this.position.x, y : this.position.y - 5 }
+			});
+
+			this.bullets.push(bullet);
+			this.lastShot = Date.now();
+		}
+	}
+
+	die() {
+		this.onDie();
+	}
+
+	renderBullets(state) {
+		let index = 0;
+	    for (let bullet of this.bullets) {
+	      if (bullet.delete) {
+	        this.bullets.splice(index, 1);
+	      } else {
+	      	this.bullets[index].update();
+	        this.bullets[index].render(state);
+	      }
+	      index++;
+	    }
 	}
 
 	render(state) {
@@ -33,6 +63,8 @@ export default class Ship {
 	    else if(this.position.y < 0) {
 	    	this.position.y = state.screen.height;
 	    }
+
+	    this.renderBullets(state);
 
 	    const context = state.context;
 	    context.save();
