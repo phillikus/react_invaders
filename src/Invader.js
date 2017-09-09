@@ -6,10 +6,11 @@ const Direction = {
 export default class Invader { 
 	constructor (args) {
 		this.position = args.position;
+		this.onDie = args.onDie;
 		this.delete = false;
 		this.speed = 1;
 		this.radius = 50;
-		this.direction = Direction.Right;
+		this.direction = Direction.Right;		
 	}
 
 	reverse() {
@@ -32,6 +33,7 @@ export default class Invader {
 
 	die() {
 		this.delete = true;
+		this.onDie();
 	}
 
 	render(state) {

@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import InputManager from './InputManager';
 import TitleScreen from './Components/TitleScreen';
+import GameOverScreen from './Components/GameOverScreen';
 import Ship from './Ship';
 import Invader from './Invader';
 import { checkCollisionsWith, checkCollision } from './Helper';
@@ -24,14 +25,17 @@ class App extends Component {
       screen: {
         width: width,
         height: height,
-        ratio: window.devicePixelRatio || 1
+        ratio: window.devicePixelRatio || 1        
       },
+      score: 0,
       gameState: GameState.StartScreen,
+      previousState: GameState.StartScreen,
       context: null
     };
 
     this.ship = null;
     this.invaders = [];
+    this.lastStateChange = 0;
   }
 
   handleResize(value, e){
@@ -50,7 +54,8 @@ class App extends Component {
 
     for (var i = 0; i < count; i++) {
       const invader = new Invader({
-         position: { x: newPosition.x, y: newPosition.y }
+         position: { x: newPosition.x, y: newPosition.y },
+         onDie: this.increaseScore.bind(this, false)
       });
 
       newPosition.x += invader.radius + 20;
@@ -91,25 +96,42 @@ class App extends Component {
     this.createInvaders(27);
 
     this.setState({
-      gameState: GameState.Playing
+      gameState: GameState.Playing,
+      score: 0
     }); 
   }
 
   die() {
-    this.setState({ gameState: GameState.StartScreen });
+    this.setState({ gameState: GameState.GameOver });
     this.ship = null;
     this.invaders = [];
+    this.lastStateChange = Date.now();
+  }
+
+  increaseScore(val) {
+    this.setState({ score: this.state.score + 500 });
   }
 
   update() {
     const keys = this.state.input.pressedKeys;
     const context = this.state.context;
 
-    if (this.state.gameState === GameState.StartScreen && keys.space) {
+
+    if (this.state.gameState === GameState.StartScreen && keys.space && Date.now() - this.lastStateChange > 1000) {
       this.startGame();
     }
 
-    if (this.state.gameState === GameState.Playing) {
+    if (this.state.gameState === GameState.GameOver && keys.space) {
+      this.setState({ gameState: GameState.StartScreen});      
+    }
+
+    if (this.state.gameState === GameState.Playing && Date.now() - this.lastStateChange > 500) {
+      if (this.state.previousState !== GameState.Playing) {
+        var audio = new Audio('./assets/sound.mp3');
+        audio.play();
+        this.lastStateChange = Date.now();
+      }
+
       context.save();
       context.scale(this.state.screen.ratio, this.state.screen.ratio);
 
@@ -124,8 +146,8 @@ class App extends Component {
       }
 
       this.renderInvaders(this.state);
-      
-      context.restore();      
+      this.setState({previousState: this.state.gameState});
+      context.restore();     
     }
 
     requestAnimationFrame(() => {this.update()});
@@ -164,10 +186,15 @@ class App extends Component {
     }
   }
 
+  sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
   render() {
     return (
       <div>
         { this.state.gameState === GameState.StartScreen && <TitleScreen /> }        
+        { this.state.gameState === GameState.GameOver && <GameOverScreen score= { this.state.score } /> }        
         <canvas ref="canvas"
            width={ this.state.screen.width * this.state.screen.ratio }
            height={ this.state.screen.height * this.state.screen.ratio }

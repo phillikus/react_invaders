@@ -27,7 +27,12 @@ canvas {
   font-size: 20px;
   color: #ffffff;
 }
-.titleScreen {
+.score {
+  top: 30%;
+  font-size: 40px;
+  color: #ffffff;
+}
+.centerScreen {
   text-align: center;
   display: block;
   position: absolute;
