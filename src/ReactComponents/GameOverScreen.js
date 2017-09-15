@@ -11,6 +11,7 @@ export default class GameOverScreen extends React.Component {
 			<div>
 				<span className="centerScreen title">GameOver!</span>
 				<span className="centerScreen score">Score: { this.state.score }</span>
+				<span className="centerScreen pressEnter">Press enter to continue!</span>
 			</div>
 			);
 	}

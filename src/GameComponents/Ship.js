@@ -1,40 +1,29 @@
 import Bullet from './Bullet';
+import GameObject from './GameObject';
 
-export default class Ship {
+export default class Ship extends GameObject {
 	constructor(args) {
-		this.position = args.position;
-		this.onDie = args.onDie;
-		this.speed = 2.5;
-		this.radius = 15;
+		super({ position: args.position, onDie: args.onDie, speed: 2.5, radius: 15 });
 		this.bullets = [];
 		this.lastShot = 0;
 	}
 
 	update(keys) {
-		if (keys.left) {
-			this.position.x -= this.speed;
-		} else if (keys.right) {
+		if (keys.right) {
 			this.position.x += this.speed;
-		}
-
-		if (keys.up) {
-			this.position.y -= this.speed;
-		} else if (keys.down) {
-			this.position.y += this.speed;
+		} else if (keys.left) {
+			this.position.x -= this.speed;
 		}
 
 		if (keys.space && Date.now() - this.lastShot > 250) {
 			const bullet = new Bullet({
-				position: { x: this.position.x, y : this.position.y - 5 }
+				position: { x: this.position.x, y : this.position.y - 5 },
+				direction : "up"
 			});
 
 			this.bullets.push(bullet);
 			this.lastShot = Date.now();
 		}
-	}
-
-	die() {
-		this.onDie();
 	}
 
 	renderBullets(state) {

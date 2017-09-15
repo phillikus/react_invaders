@@ -1,17 +1,17 @@
-export default class Bullet {
+import GameObject from './GameObject';
+
+export default class Bullet extends GameObject {
 	constructor(args) {
-		this.position = args.position;
-		this.delete = false;
-		this.speed = 5;
-		this.radius = 5;		
+		super({ position: args.position, speed: 5, radius: 5 })
+		this.direction = args.direction;
 	}
 
 	update() {
-		this.position.y -= this.speed;
-	}
-
-	die() {
-		this.delete = true;
+		if (this.direction === "up") {
+			this.position.y -= this.speed;
+		} else {
+			this.position.y += this.speed;
+		}
 	}
 
 	render(state) {

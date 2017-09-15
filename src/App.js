@@ -1,9 +1,9 @@
 import React, { Component } from 'react';
 import InputManager from './InputManager';
-import TitleScreen from './Components/TitleScreen';
-import GameOverScreen from './Components/GameOverScreen';
-import Ship from './Ship';
-import Invader from './Invader';
+import TitleScreen from './ReactComponents/TitleScreen';
+import GameOverScreen from './ReactComponents/GameOverScreen';
+import Ship from './GameComponents/Ship';
+import Invader from './GameComponents/Invader';
 import { checkCollisionsWith, checkCollision } from './Helper';
 import './App.css';
 
@@ -36,6 +36,8 @@ class App extends Component {
     this.ship = null;
     this.invaders = [];
     this.lastStateChange = 0;
+    this.previousDelta = 0;
+    this.fpsLimit = 30;
   }
 
   handleResize(value, e){
@@ -89,7 +91,7 @@ class App extends Component {
       onDie: this.die.bind(this),
       position: {
         x: this.state.screen.width/2,
-        y: this.state.screen.height/2
+        y: this.state.screen.height - 50
       }});
     this.ship = ship;
 
@@ -112,24 +114,31 @@ class App extends Component {
     this.setState({ score: this.state.score + 500 });
   }
 
-  update() {
+  update(currentDelta) {
+    var delta = currentDelta - this.previousDelta;
+
+    if (this.fpsLimit && delta < 1000 / this.fpsLimit) {
+      return;
+    }
+
     const keys = this.state.input.pressedKeys;
     const context = this.state.context;
 
-
-    if (this.state.gameState === GameState.StartScreen && keys.space && Date.now() - this.lastStateChange > 1000) {
+    if (this.state.gameState === GameState.StartScreen && keys.space && Date.now() - this.lastStateChange > 2000) {
       this.startGame();
     }
 
-    if (this.state.gameState === GameState.GameOver && keys.space) {
+    if (this.state.gameState === GameState.GameOver && keys.enter) {
       this.setState({ gameState: GameState.StartScreen});      
     }
 
     if (this.state.gameState === GameState.Playing && Date.now() - this.lastStateChange > 500) {
       if (this.state.previousState !== GameState.Playing) {
-        var audio = new Audio('./assets/sound.mp3');
-        audio.play();
         this.lastStateChange = Date.now();
+      }
+
+      if (this.invaders.length === 0) {
+        this.setState({ gameState: GameState.GameOver });
       }
 
       context.save();
@@ -139,6 +148,10 @@ class App extends Component {
       context.globalAlpha = 1;
       checkCollisionsWith(this.ship.bullets, this.invaders);
       checkCollisionsWith([this.ship], this.invaders);
+
+      for (var i = 0; i < this.invaders.length; i++) {
+        checkCollisionsWith(this.invaders[i].bullets, [this.ship]);
+      }
 
       if (this.ship !== null) {
         this.ship.update(keys);
@@ -165,7 +178,7 @@ class App extends Component {
                invader.position.x - invader.radius <= 0) {
         reverse = true;
       }
-      else {
+      else {        
         this.invaders[index].update();
         this.invaders[index].render(state);
       }
