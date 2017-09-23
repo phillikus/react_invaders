@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import InputManager from './InputManager';
 import TitleScreen from './ReactComponents/TitleScreen';
 import GameOverScreen from './ReactComponents/GameOverScreen';
+import ControlOverlay from './ReactComponents/ControlOverlay';
 import Ship from './GameComponents/Ship';
 import Invader from './GameComponents/Invader';
 import { checkCollisionsWith, checkCollision } from './Helper';
@@ -38,6 +39,7 @@ class App extends Component {
     this.lastStateChange = 0;
     this.previousDelta = 0;
     this.fpsLimit = 30;
+    this.showControls = false;
   }
 
   handleResize(value, e){
@@ -48,43 +50,7 @@ class App extends Component {
         ratio: window.devicePixelRatio || 1,
       }
     });
-  }
-
-  createInvaders(count) {
-    const newPosition = { x: 100, y: 20 };
-    let swapStartX = true;
-
-    for (var i = 0; i < count; i++) {
-      const invader = new Invader({
-         position: { x: newPosition.x, y: newPosition.y },
-         onDie: this.increaseScore.bind(this, false)
-      });
-
-      newPosition.x += invader.radius + 20;
-
-      if (newPosition.x + invader.radius + 50 >= this.state.screen.width) {
-        newPosition.x = swapStartX ? 110 : 100;
-        swapStartX = !swapStartX;
-        newPosition.y += invader.radius + 20;
-      }
-
-      this.invaders.push(invader);
-    }
-  }
-
-  componentDidMount() {
-    window.addEventListener('resize',  this.handleResize.bind(this, false));
-    this.state.input.bindKeys();
-    const context = this.refs.canvas.getContext('2d');
-    this.setState({ context: context });
-
-    requestAnimationFrame(() => {this.update()});    
-  }
-
-  componentWillUnmount() {
-    this.state.input.unbindKeys();
-    window.removeEventListener('resize', this.handleResize);
-  }
+  }  
 
   startGame() {
     let ship = new Ship({
@@ -101,6 +67,7 @@ class App extends Component {
       gameState: GameState.Playing,
       score: 0
     }); 
+    this.showControls = true;
   }
 
   die() {
@@ -124,7 +91,7 @@ class App extends Component {
     const keys = this.state.input.pressedKeys;
     const context = this.state.context;
 
-    if (this.state.gameState === GameState.StartScreen && keys.space && Date.now() - this.lastStateChange > 2000) {
+    if (this.state.gameState === GameState.StartScreen && keys.enter && Date.now() - this.lastStateChange > 2000) {
       this.startGame();
     }
 
@@ -149,6 +116,10 @@ class App extends Component {
       checkCollisionsWith(this.ship.bullets, this.invaders);
       checkCollisionsWith([this.ship], this.invaders);
 
+      if (keys.space || keys.left || keys.right) {
+        this.showControls = false;
+      }
+
       for (var i = 0; i < this.invaders.length; i++) {
         checkCollisionsWith(this.invaders[i].bullets, [this.ship]);
       }
@@ -164,6 +135,28 @@ class App extends Component {
     }
 
     requestAnimationFrame(() => {this.update()});
+  }  
+
+  createInvaders(count) {
+    const newPosition = { x: 100, y: 20 };
+    let swapStartX = true;
+
+    for (var i = 0; i < count; i++) {
+      const invader = new Invader({
+         position: { x: newPosition.x, y: newPosition.y },
+         onDie: this.increaseScore.bind(this, false)
+      });
+
+      newPosition.x += invader.radius + 20;
+
+      if (newPosition.x + invader.radius + 50 >= this.state.screen.width) {
+        newPosition.x = swapStartX ? 110 : 100;
+        swapStartX = !swapStartX;
+        newPosition.y += invader.radius + 20;
+      }
+
+      this.invaders.push(invader);
+    }
   }  
 
   renderInvaders(state) {
@@ -197,15 +190,26 @@ class App extends Component {
       this.invaders[index].position.y += 50;
       index++;
     }
+  }  
+
+  componentDidMount() {
+    window.addEventListener('resize',  this.handleResize.bind(this, false));
+    this.state.input.bindKeys();
+    const context = this.refs.canvas.getContext('2d');
+    this.setState({ context: context });
+
+    requestAnimationFrame(() => {this.update()});    
   }
 
-  sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+  componentWillUnmount() {
+    this.state.input.unbindKeys();
+    window.removeEventListener('resize', this.handleResize);
   }
 
   render() {
     return (
       <div>
+        { this.showControls && <ControlOverlay /> }
         { this.state.gameState === GameState.StartScreen && <TitleScreen /> }        
         { this.state.gameState === GameState.GameOver && <GameOverScreen score= { this.state.score } /> }        
         <canvas ref="canvas"

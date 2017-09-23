@@ -37,10 +37,20 @@ canvas {
   font-size: 40px;
   color: #ffffff;
 }
+.controls {
+  top: 85%;
+  font-size: 20px;
+  color: #ffffff;
+  animation: blinker 1s linear infinite;
+}
 .centerScreen {
   text-align: center;
   display: block;
   position: absolute;
   z-index: 1;
   width: 100%;  
+}
+
+@keyframes blinker {  
+  50% { opacity: 0; }
 }

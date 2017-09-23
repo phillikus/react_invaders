@@ -5,7 +5,7 @@ export default class TitleScreen extends React.Component {
 		return (
 			<div>
 				<span className="centerScreen title">React Invaders</span>
-				<span className="centerScreen pressSpace">Press Space to start the game!</span>
+				<span className="centerScreen pressSpace">Press Enter to start the game!</span>
 			</div>
 			);
 	}
